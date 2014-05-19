@@ -1,5 +1,3 @@
-var restored_text = localStorage.getItem("user_data");
-
 $(document).ready(function() {
 	
 	// Restore any auto-saved text and if there isn't any,
@@ -11,6 +9,24 @@ $(document).ready(function() {
 		else {
 			$("#text").val("Enter notes here...");
 		}
+	});
+	
+	chrome.storage.sync.get('savedTitle', function(storedTitle) {
+		$("#title").val(storedTitle.savedTitle);
+	});
+	
+	$("#title").click(function(){
+		$(this).replaceWith("<form id=\'newTitleForm\'><input type=\'text\' id=\'newTitle\'><input type=\'submit\' onsubmit=\'setNewTitle()\' value=\'OK\'>");
+	});
+	
+	$("#newTitleForm").submit(function( event ) {
+		event.preventDefault();
+		event.stopPropogation();
+		var newTitle = $("#newTitle").val();
+		var newHtml = "<h3 id=\'title\'>" + newTitle + "</h3>";
+		$(this).replaceWith(newHtml);
+		chrome.storage.sync.set( {"savedTitle": newTitle} );
+		return false;
 	});
 	
 	// Clear the textarea when the user clicks the New button
@@ -40,6 +56,12 @@ function autoSave() {
 	var currentText = $("#text").val();
 	chrome.storage.sync.set( {"autosave": currentText} );
 };
+
+function setNewTitle() {
+	var newTitle = $("#newTitle").val();
+	var newHtml = "<h3 id=\'title\'>" + newTitle + "</h3>";
+	$("#newTitleForm").replaceWith(newHtml);
+}
 
 /* TODO:
 * 1. Make it so if you click New, then the autosaved information is cleared.
