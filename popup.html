@@ -1,0 +1,37 @@
+<!doctype html>
+
+<html>
+<head>
+	<!-- CSS. Will normally be a separate file -->
+	<style>
+		html {
+			width: 350px;
+			height: 600px;
+		}
+		#text {
+			width: 200px;
+			height: 300px;
+		}
+	</style>
+	<!-- Include JQuery and Underscore.js -->
+	<script src="underscore-min.js" type="text/javascript"></script>
+	<script src="jquery-1.6.2.min.js"></script>
+	<!-- My javascript to make the notepad work -->
+	<script src="script.js"></script>
+
+</head>
+
+<body>
+	<h1>Notes</h1>
+	<h2 id="title">Title</h2>
+	<div id="notepad">
+	<!-- Interactive notepad will go here -->
+	<textarea name="text" id="text" style="border:2px solid black; overflow:auto;rows="6" cols="53"></textarea>
+	</div>
+	<div class="button">
+	<!-- Buttons! -->
+	<button type="button" id="new">New</button>
+	<button type="button">Save</button>
+	</div>
+</body>
+</html>
