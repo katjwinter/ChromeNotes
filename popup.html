@@ -5,33 +5,76 @@
 	<!-- CSS. Will normally be a separate file -->
 	<style>
 		html {
-			width: 350px;
-			height: 600px;
+			height: 100%;
+			width: 400px;
+		}
+		#headings {
+			float: left;
+			margin-top: 5%;
+			width: 100%;
+		}
+		#main_area {
+			float: left;
+			clear: both;
 		}
 		#text {
-			width: 200px;
-			height: 300px;
+			float: left;
+			width: 90%;
+			margin-left: 5%;
+			padding: 5px;
+			min-height: 300px;
+		}
+		#buttons {
+			float: left;
+			clear: both;
+			margin-top: 10px;
+		}
+		#menuOptions {
+			float: left;
+			margin-top: 10px;
+			clear: both;
+		}
+		#footer {
+			clear: both;
 		}
 	</style>
 	<!-- Include JQuery and Underscore.js -->
 	<script src="underscore-min.js" type="text/javascript"></script>
 	<script src="jquery-1.6.2.min.js"></script>
-	<!-- My javascript to make the notepad work -->
+	<!-- Functionality -->
 	<script src="script.js"></script>
 
 </head>
 
 <body>
-	<h1>Notes</h1>
-	<h2 id="title">Title</h2>
-	<div id="notepad">
-	<!-- Interactive notepad will go here -->
-	<textarea name="text" id="text" style="border:2px solid black; overflow:auto;rows="6" cols="53"></textarea>
+	<div id="headings">
+		<h2 id="saveFlag"></h2>
+		<h3><div id="title"></div></h3>
 	</div>
-	<div class="button">
-	<!-- Buttons! -->
-	<button type="button" id="new">New</button>
-	<button type="button">Save</button>
+	<div id="main_area">
+		<div id="notepad">
+			<!-- Interactive Writing Section -->
+			<textarea name="text" id="text" style="border:2px solid black; overflow:auto;rows="6" cols="53"></textarea>
+		</div>
+		<div id="buttons">
+			<!-- Controls -->
+			<button type="button" id="new">New</button>
+			<button type="button">Save</button>
+			<button type="button">Load</button>
+		</div>
 	</div>
+	<div id="menuOptions">
+		<ul id="loadMenu">
+			<li>thing</li>
+			<li>thing</li>
+			<li>thing</li>
+			<li>thing</li>
+			<li>thing</li>
+			<li>thing</li>
+			<li>thing</li>
+			<li>thing</li>
+		</ul>
+	</div>
+	<div id="footer"></div>
 </body>
 </html>
