@@ -179,9 +179,7 @@ function autoSave() {
 };
 
 /* TODO:
-* 1. Make it so if you click New, then the autosaved information is cleared.
-* 2. Make it so that Save button actually saves the note. Do we want to save to sync or to Google Drive?
-* 3. Make a Load button that will present a list of the notes to load and load the selected note.
-* 4: Consider refactoring with Backbone.js
+* 1. Do we want to save to Google Drive instead of chrome.storage.sync?
+* 2: Consider refactoring with Backbone.js not that it's necessary
 */
 
