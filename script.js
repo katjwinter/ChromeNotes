@@ -3,6 +3,9 @@ $(document).ready(function() {
 	// Set save flag to indicate an unchanged document
 	$("#saveFlag").text(saved);
 	
+	// Hide the load menu until it's called for
+	//$("#loadMenu").hide();
+	
 	// Restore any auto-saved text and if there isn't any,
 	// display the default text.
 	chrome.storage.sync.get('autosave', function(stored_value) {
@@ -92,13 +95,39 @@ $(document).ready(function() {
 	});
 	
 	// Load text and title
-	$("load").click(function() {
+	$("#load").click(function() {
 		// get all saved items
 		chrome.storage.sync.get(null, function(allSaves) {
 			var titles = Object.keys(allSaves);
+			// If there is at least one saved note, so present them in a list
+			if (titles) {
+				var html = $("#loadMenu").html();
+				for (title in titles) {
+					var savedTitle = title;
+					var savedText = allSaves.title;
+					html = html + "<option>" + title + "</option>";
+				}
+				$("#loadMenu").html(html);
+				
+				// Bind to function so whichever one is selected, load that title and text
+				$("#loadMenu").change(function() {
+					var title = $(this).val();
+					var text = titles[text];
+					$("#text").val(text);
+					$("#title").text(title);
+					// reset save flag because this is newly loaded so no changes have been made
+					$("#saveFlag").text(unsaved);
+					// hide the load menu
+					$("#loadMenu").hide();
+				});
+				
+				// Make the load menu visible
+				$("#loadMenu").show();
+			}
+			else {
+				alert("No saved files to load");
+			}
 		});
-		// present a list
-		// whichever one is selected, load that title and text
 	});
 });
 
