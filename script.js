@@ -3,8 +3,9 @@ $(document).ready(function() {
 	// Set save flag to indicate an unchanged document
 	$("#saveFlag").text(saved);
 	
-	// Hide the load menu until it's called for
-	//$("#loadMenu").hide();
+	// Set load menu to default and hide until it's called for
+	resetLoadMenu();
+	$("#loadMenu").hide();
 	
 	// Restore any auto-saved text and if there isn't any,
 	// display the default text.
@@ -17,22 +18,15 @@ $(document).ready(function() {
 		}
 	});
 	
-	// Restore auto-saved title if there is one
-	chrome.storage.sync.get('savedTitle', function(storedTitle) {
-		if (storedTitle.savedTitle) {
-			$("#title").text(storedTitle.savedTitle);
-		}
-		else {
-			$("#title").text("Untitled");
-		}
-	});
+	// Set title to default
+	resetTitle();
 	
 	$("#title").click(function(){	
 		// When user clicks on the title, change to a text input so the user can change the title
 		var currentTitle = $("#title").text();
 		$(this).replaceWith("<form id=\'newTitleForm\'><input type=\'text\' id=\'newTitle\' value=\'" + currentTitle + "\'><input type=\'submit\' value=\'OK\'>");
 		
-		// After the user has clicked OK for the new title, change back to the (new) title text and save the new title
+		// After the user has clicked OK for the new title, change back to the (new) title text
 		$("#newTitleForm").submit(function( event ) {
 			event.preventDefault();
 			event.stopPropagation();
@@ -43,10 +37,7 @@ $(document).ready(function() {
 			$("#saveFlag").text(unsaved);
 			// We change the html back to the original, but despite the id being the same, it is no longer bound to this click function.
 			// As a workaround, we will call out to a function outside of document.ready. 
-			// Didn't move this whole function beyond document.ready because during initial page load, the id might not be present.
 			rebindClickFunction();
-			// Now save the new title
-			chrome.storage.sync.set( {"savedTitle": newTitle} );
 			return false;
 		});
 	});
@@ -78,56 +69,77 @@ $(document).ready(function() {
 	// Save text and title
 	$("#save").click(function() {
 		var title = $("#title").text();
+		var text = $("#text").val();
 		// Check that there is not a title conflict
 		chrome.storage.sync.get(title, function(newTitle) {
-			if (newTitle.title) {
+			if (newTitle[title]) {
 				// There is already a note saved with this title
 				// - prompt to overwrite or to cancel
-				alert("title already exists");
+				alert("Error: A note with this file already exists");
 			}
 			else {
 				// no conflict, so proceed with save
-				chrome.storage.sync.set({title: text});
+				var pair = {};
+				pair[title] = text; // necessary to save the key as a variable
+				chrome.storage.sync.set(pair);
 				// set save flag
 				$("#saveFlag").text(saved);
+				alert(title + " saved successfully");
 			}
 		});
 	});
 	
 	// Load text and title
 	$("#load").click(function() {
-		// get all saved items
-		chrome.storage.sync.get(null, function(allSaves) {
-			var titles = Object.keys(allSaves);
-			// If there is at least one saved note, so present them in a list
-			if (titles) {
-				var html = $("#loadMenu").html();
-				for (title in titles) {
-					var savedTitle = title;
-					var savedText = allSaves.title;
-					html = html + "<option>" + title + "</option>";
+		// don't load the menu if it's already open
+		var unopened = $("#loadMenu").is(":hidden");
+		if (unopened) {
+			// get all saved items
+			chrome.storage.sync.get(null, function(allSaves) {
+				var titles = Object.getOwnPropertyNames(allSaves);
+				// If there is at least one saved note, present them in a dropdown list
+				if (titles) {
+					var html = $("#loadMenu").html();
+					for (titlekey in titles) {
+						var title = titles[titlekey];
+						html = html + "<option>" + title + "</option>";
+					}
+					$("#loadMenu").html(html);
+					
+					// Bind to function so whichever one is selected, load that title and text
+					$("#loadMenu").change(function() {
+						var title = $(this).val();
+						chrome.storage.sync.get(title, function(text) {
+							var restore = text[title];
+							if (restore) {
+								$("#text").val(restore);
+								if (title != "autosave") {
+									$("#title").text(title);
+								}
+								else {
+									resetTitle();
+								}
+								// reset save flag because this is newly loaded so no changes have been made
+								$("#saveFlag").text(saved);
+								// hide the load menu
+								$("#loadMenu").hide();
+								// reset load menu text
+								resetLoadMenu();
+							}
+							else {
+								alert("No text associated with this title");
+							}
+						});
+					});
+					
+					// Make the load menu visible
+					$("#loadMenu").show();
 				}
-				$("#loadMenu").html(html);
-				
-				// Bind to function so whichever one is selected, load that title and text
-				$("#loadMenu").change(function() {
-					var title = $(this).val();
-					var text = titles[text];
-					$("#text").val(text);
-					$("#title").text(title);
-					// reset save flag because this is newly loaded so no changes have been made
-					$("#saveFlag").text(unsaved);
-					// hide the load menu
-					$("#loadMenu").hide();
-				});
-				
-				// Make the load menu visible
-				$("#loadMenu").show();
-			}
-			else {
-				alert("No saved files to load");
-			}
-		});
+				else {
+					alert("No saved files to load");
+				}
+			});
+		}
 	});
 });
 
@@ -135,19 +147,26 @@ $(document).ready(function() {
 var unsaved = "Notes*";
 var saved = "Notes";
 
+// Load menu default
+function resetLoadMenu() {
+	$("#loadMenu").html("<option>Select a file to load</option>");
+}
+
+// Title default
+function resetTitle() {
+	$("#title").text("Untitled");
+}
+
 // Make Autosave only occur at most every second using debounce
 var debounced_autoSave = _.debounce(autoSave, 1000, true);
 
 function rebindClickFunction() {
-	$("#title").click(function(){
-		// Remove the save flag temporarily so it doesn't interfere with the form
-		$("#saveFlag").hide();
-		
+	$("#title").click(function(){	
 		// When user clicks on the title, change to a text input so the user can change the title
 		var currentTitle = $("#title").text();
 		$(this).replaceWith("<form id=\'newTitleForm\'><input type=\'text\' id=\'newTitle\' value=\'" + currentTitle + "\'><input type=\'submit\' value=\'OK\'>");
 		
-		// After the user has clicked OK for the new title, change back to the (new) title text and save the new title
+		// After the user has clicked OK for the new title, change to the (new) title text
 		$("#newTitleForm").submit(function( event ) {
 			alert("clicked to submit form");
 			event.preventDefault();
@@ -155,12 +174,10 @@ function rebindClickFunction() {
 			var newTitle = $("#newTitle").val();
 			var newHtml = "<div id=\'title\'>" + newTitle + "</div>";
 			$(this).replaceWith(newHtml);
-			// Display the save flag because the title (and thus the note as a whole) has been changed
-			$("#saveFlag").show();
+			// set the save flag to unsaved because the title (and thus the note as a whole) has been changed
+			$("#saveFlag").text(unsaved);
 			// Rebind the click function since we have changed the id (even though it has the same name, it's no longer bound)
 			rebindClickFunction();
-			// Now save the new title
-			chrome.storage.sync.set( {"savedTitle": newTitle} );
 			return false;
 		});
 	});
@@ -175,7 +192,7 @@ function autoSave() {
 	var currentText = $("#text").val();
 	chrome.storage.sync.set( {"autosave": currentText} );
 	// Set saved flag
-	$("#saveFlag").show();
+	$("#saveFlag").text(saved);
 };
 
 /* TODO:
