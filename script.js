@@ -7,6 +7,10 @@ $(document).ready(function() {
 	resetLoadMenu();
 	$("#loadMenu").hide();
 	
+	// Set delete menu to default and hide until it's called for
+	resetDelMenu();
+	$("#delMenu").hide();
+	
 	// Restore any auto-saved text and if there isn't any,
 	// display the default text.
 	chrome.storage.sync.get('autosave', function(stored_value) {
@@ -62,7 +66,7 @@ $(document).ready(function() {
 		$("#saveFlag").text(unsaved);
 		var currentText = $("#text").val();
 		if (currentText) {
-			debounced_autoSave();
+			throttled_autoSave();
 		}
 	};
 	
@@ -91,65 +95,141 @@ $(document).ready(function() {
 	
 	// Load text and title
 	$("#load").click(function() {
-		// don't load the menu if it's already open
-		var unopened = $("#loadMenu").is(":hidden");
-		if (unopened) {
-			// get all saved items
-			chrome.storage.sync.get(null, function(allSaves) {
-				var titles = Object.getOwnPropertyNames(allSaves);
-				// If there is at least one saved note, present them in a dropdown list
-				if (titles) {
-					var html = $("#loadMenu").html();
-					for (titlekey in titles) {
-						var title = titles[titlekey];
-						html = html + "<option>" + title + "</option>";
-					}
-					$("#loadMenu").html(html);
-					
-					// Bind to function so whichever one is selected, load that title and text
-					$("#loadMenu").change(function() {
-						var title = $(this).val();
-						chrome.storage.sync.get(title, function(text) {
-							var restore = text[title];
-							if (restore) {
-								$("#text").val(restore);
-								if (title != "autosave") {
-									$("#title").text(title);
-								}
-								else {
-									resetTitle();
-								}
-								// reset save flag because this is newly loaded so no changes have been made
-								$("#saveFlag").text(saved);
-								// hide the load menu
-								$("#loadMenu").hide();
-								// reset load menu text
-								resetLoadMenu();
+		// In the event that this was clicked out of and then re-opened without a
+		// file being loaded, make sure that the dropdown list starts off clear
+		// before we proceed below
+		resetLoadMenu();
+		
+		// get all saved items
+		chrome.storage.sync.get(null, function(allSaves) {
+			var titles = Object.getOwnPropertyNames(allSaves);
+			// If there is at least one saved note, present them in a dropdown list
+			if (titles) {
+				var html = $("#loadMenu").html();
+				for (titlekey in titles) {
+					var title = titles[titlekey];
+					html = html + "<option>" + title + "</option>";
+				}
+				$("#loadMenu").html(html);
+				
+				// Bind to function so whichever one is selected, load that title and text
+				$("#loadMenu").change(function() {
+					var title = $(this).val();
+					chrome.storage.sync.get(title, function(text) {
+						var restore = text[title];
+						if (restore) {
+							$("#text").val(restore);
+							if (title != "autosave") {
+								$("#title").text(title);
 							}
 							else {
-								alert("No text associated with this title");
+								resetTitle();
 							}
-						});
+							// reset save flag because this is newly loaded so no changes have been made
+							$("#saveFlag").text(saved);
+							// hide the load menu
+							$("#loadMenu").hide();
+							// reset load menu text
+							resetLoadMenu();
+						}
+						else {
+							alert("No text associated with this title");
+						}
 					});
-					
-					// Make the load menu visible
-					$("#loadMenu").show();
+				});
+				
+				// Make the load menu visible
+				$("#loadMenu").show();
+			}
+			else {
+				alert("No saved files to load");
+			}
+		});
+	});
+	
+	// Delete a saved file
+	$("#delete").click(function() {
+		// In the event that this was clicked out of and then re-opened without a
+		// file being selected, make sure that the dropdown list starts off clear
+		// before we proceed below
+		resetDelMenu();
+		
+		// get all saved items
+		chrome.storage.sync.get(null, function(allSaves) {
+			var titles = Object.getOwnPropertyNames(allSaves);
+			// If there is at least one saved note, present them in a dropdown list
+			if (titles) {
+				var html = $("#delMenu").html();
+				for (titlekey in titles) {
+					var title = titles[titlekey];
+					html = html + "<option>" + title + "</option>";
 				}
-				else {
-					alert("No saved files to load");
-				}
-			});
+				$("#delMenu").html(html);
+				
+				// Bind to function so whichever one is selected is deleted
+				$("#delMenu").change(function() {
+					var title = $(this).val();
+					chrome.storage.sync.remove(title, function() {
+						if (chrome.runtime.lastError) {
+							alert("Error: Could not delete file");
+						}
+						else {
+							alert("File successfully deleted");
+						}
+					});
+					// Hide delete menu
+					$("#delMenu").hide();
+					resetDelMenu();
+				});
+				
+				// Make the delete menu visible
+				$("#delMenu").show();
+			}
+			else {
+				alert("No saved files to delete");
+			}
+		});
+	});
+	
+	// Delete all saved files
+	$("#delAll").click(function() {
+		chrome.storage.sync.clear(function() {
+			if (chrome.runtime.lastError) {
+				alert("Error: Could not delete files");
+			}
+			else {
+				alert("All files successfully deleted");
+			}
+		});
+	});
+	
+	// If a dropdown menu is open and the user clicks elsewhere, close the dropdown
+	$(document).click(function(event) { 
+		if ($(event.target).closest("#loadMenu").length == 0) {
+			$("#loadMenu").hide()
+			resetLoadMenu();
+		}        
+	});
+	$(document).click(function(event) {
+		if ($(event.target).closest("#delMenu").length == 0) {
+			$("#delMenu").hide();
+			resetDelMenu();
 		}
 	});
 });
 
 // Save Flag
-var unsaved = "Notes*";
-var saved = "Notes";
+var unsaved = "Easy Notes*";
+var saved = "Easy Notes";
 
 // Load menu default
 function resetLoadMenu() {
 	$("#loadMenu").html("<option>Select a file to load</option>");
+}
+
+// Delete menu default
+function resetDelMenu() {
+	$("#delMenu").html("<option>Select a file to DELETE</option>");
 }
 
 // Title default
@@ -159,6 +239,8 @@ function resetTitle() {
 
 // Make Autosave only occur at most every second using debounce
 var debounced_autoSave = _.debounce(autoSave, 1000, true);
+
+var throttled_autoSave = _.throttle(autoSave, 1000);
 
 function rebindClickFunction() {
 	$("#title").click(function(){	
@@ -196,7 +278,8 @@ function autoSave() {
 };
 
 /* TODO:
-* 1. Do we want to save to Google Drive instead of chrome.storage.sync?
-* 2: Consider refactoring with Backbone.js not that it's necessary
+* 1. STYLE
+* 2. Do we want to save to Google Drive instead of chrome.storage.sync?
+* 3: Consider refactoring with Backbone.js not that it's necessary
 */
 
