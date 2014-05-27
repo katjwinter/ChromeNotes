@@ -37,6 +37,12 @@
 		#footer {
 			clear: both;
 		}
+		.modified:after {
+			content: "*";
+		}
+		#title[contenteditable="true"]:focus {
+			border: 2px solid red;
+		}
 	</style>
 	<!-- Include JQuery and Underscore.js -->
 	<script src="underscore-min.js" type="text/javascript"></script>
@@ -48,8 +54,7 @@
 
 <body>
 	<div id="headings">
-		<h2 id="saveFlag"></h2>
-		<h3><div id="title"></div></h3>
+		<h3 id="title"></h3>
 	</div>
 	<div id="main_area">
 		<div id="notepad">
@@ -66,10 +71,15 @@
 		</div>
 	</div>
 	<div id="menuOptions">
-		<select id="loadMenu" name="fileSelect">
-		</select>
-		<select id="delMenu" name="delSelect">
-		</select>
+		<script id="menuTemplate" type="underscore/template">
+				<% _.each(titleList, function(title) { %>
+					<option>
+						<%= title %>
+					</option>
+				<% }); %>
+		</script>
+		<select id="loadMenu"></select>
+		<select id="delMenu"></select>
 	</div>
 	<div id="footer"></div>
 </body>

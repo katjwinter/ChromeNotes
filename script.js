@@ -1,14 +1,9 @@
 $(document).ready(function() {
 	
-	// Set save flag to indicate an unchanged document
-	$("#saveFlag").text(saved);
-	
-	// Set load menu to default and hide until it's called for
-	resetLoadMenu();
+	// Hide load menu until it's called for
 	$("#loadMenu").hide();
 	
-	// Set delete menu to default and hide until it's called for
-	resetDelMenu();
+	// Hide delete menu until it's called for
 	$("#delMenu").hide();
 	
 	// Restore any auto-saved text and if there isn't any,
@@ -25,25 +20,14 @@ $(document).ready(function() {
 	// Set title to default
 	resetTitle();
 	
-	$("#title").click(function(){	
-		// When user clicks on the title, change to a text input so the user can change the title
-		var currentTitle = $("#title").text();
-		$(this).replaceWith("<form id=\'newTitleForm\'><input type=\'text\' id=\'newTitle\' value=\'" + currentTitle + "\'><input type=\'submit\' value=\'OK\'>");
-		
-		// After the user has clicked OK for the new title, change back to the (new) title text
-		$("#newTitleForm").submit(function( event ) {
-			event.preventDefault();
-			event.stopPropagation();
-			var newTitle = $("#newTitle").val();
-			var newHtml = "<div id=\'title\'>" + newTitle + "</div>";
-			$(this).replaceWith(newHtml);
-			// Display the save flag because the title (and thus the note as a whole) has been changed
-			$("#saveFlag").text(unsaved);
-			// We change the html back to the original, but despite the id being the same, it is no longer bound to this click function.
-			// As a workaround, we will call out to a function outside of document.ready. 
-			rebindClickFunction();
-			return false;
-		});
+	$("#title").click(function() {	
+		// When user clicks on the title, allow them to edit.
+		$(this).prop("contenteditable", true);
+	});
+	
+	$("#title").blur(function() {
+		$(this).toggleClass("modified", true);
+		$(this).prop("contenteditable", false);
 	});
 	
 	/* When the user clicks on New:
@@ -54,7 +38,7 @@ $(document).ready(function() {
 	$("#new").click(function() {
 		$("#text").val("");
 		$("#title").text("Untitled");
-		$("#saveFlag").text(saved);
+		$("#title").toggleClass("modified", false);
 		chrome.storage.sync.remove("autosave");
 	});
 	
@@ -63,7 +47,7 @@ $(document).ready(function() {
 	var textArea = document.getElementById("text");
 	textArea.oninput = function() {
 		// clear saved flag
-		$("#saveFlag").text(unsaved);
+		$("#title").toggleClass("modified", true);
 		var currentText = $("#text").val();
 		if (currentText) {
 			throttled_autoSave();
@@ -87,7 +71,7 @@ $(document).ready(function() {
 				pair[title] = text; // necessary to save the key as a variable
 				chrome.storage.sync.set(pair);
 				// set save flag
-				$("#saveFlag").text(saved);
+				$("#title").toggleClass("modified", false);
 				alert(title + " saved successfully");
 			}
 		});
@@ -95,22 +79,19 @@ $(document).ready(function() {
 	
 	// Load text and title
 	$("#load").click(function() {
-		// In the event that this was clicked out of and then re-opened without a
-		// file being loaded, make sure that the dropdown list starts off clear
-		// before we proceed below
-		resetLoadMenu();
-		
 		// get all saved items
 		chrome.storage.sync.get(null, function(allSaves) {
 			var titles = Object.getOwnPropertyNames(allSaves);
 			// If there is at least one saved note, present them in a dropdown list
 			if (titles) {
-				var html = $("#loadMenu").html();
+				var titleList = [];
+				titleList.push("Select a file to load");
 				for (titlekey in titles) {
-					var title = titles[titlekey];
-					html = html + "<option>" + title + "</option>";
+					titleList.push(titles[titlekey]);
 				}
-				$("#loadMenu").html(html);
+				// Update the menu via underscore.js templates
+				var menuTemplate = $("#menuTemplate").html();
+				$("#loadMenu").html(_.template(menuTemplate, {titleList:titleList}));
 				
 				// Bind to function so whichever one is selected, load that title and text
 				$("#loadMenu").change(function() {
@@ -126,11 +107,9 @@ $(document).ready(function() {
 								resetTitle();
 							}
 							// reset save flag because this is newly loaded so no changes have been made
-							$("#saveFlag").text(saved);
+							$("#title").toggleClass("modified", false);
 							// hide the load menu
 							$("#loadMenu").hide();
-							// reset load menu text
-							resetLoadMenu();
 						}
 						else {
 							alert("No text associated with this title");
@@ -149,22 +128,19 @@ $(document).ready(function() {
 	
 	// Delete a saved file
 	$("#delete").click(function() {
-		// In the event that this was clicked out of and then re-opened without a
-		// file being selected, make sure that the dropdown list starts off clear
-		// before we proceed below
-		resetDelMenu();
-		
 		// get all saved items
 		chrome.storage.sync.get(null, function(allSaves) {
 			var titles = Object.getOwnPropertyNames(allSaves);
 			// If there is at least one saved note, present them in a dropdown list
 			if (titles) {
-				var html = $("#delMenu").html();
+				var titleList = [];
+				titleList.push("Select a file to DELETE");
 				for (titlekey in titles) {
-					var title = titles[titlekey];
-					html = html + "<option>" + title + "</option>";
+					titleList.push(titles[titlekey]);
 				}
-				$("#delMenu").html(html);
+				// Update the menu via underscore.js templates
+				var menuTemplate = $("#menuTemplate").html();
+				$("#delMenu").html(_.template(menuTemplate, {titleList:titleList}));
 				
 				// Bind to function so whichever one is selected is deleted
 				$("#delMenu").change(function() {
@@ -179,7 +155,6 @@ $(document).ready(function() {
 					});
 					// Hide delete menu
 					$("#delMenu").hide();
-					resetDelMenu();
 				});
 				
 				// Make the delete menu visible
@@ -207,63 +182,22 @@ $(document).ready(function() {
 	$(document).click(function(event) { 
 		if ($(event.target).closest("#loadMenu").length == 0) {
 			$("#loadMenu").hide()
-			resetLoadMenu();
 		}        
 	});
 	$(document).click(function(event) {
 		if ($(event.target).closest("#delMenu").length == 0) {
 			$("#delMenu").hide();
-			resetDelMenu();
 		}
 	});
 });
-
-// Save Flag
-var unsaved = "Easy Notes*";
-var saved = "Easy Notes";
-
-// Load menu default
-function resetLoadMenu() {
-	$("#loadMenu").html("<option>Select a file to load</option>");
-}
-
-// Delete menu default
-function resetDelMenu() {
-	$("#delMenu").html("<option>Select a file to DELETE</option>");
-}
 
 // Title default
 function resetTitle() {
 	$("#title").text("Untitled");
 }
 
-// Make Autosave only occur at most every second using debounce
-var debounced_autoSave = _.debounce(autoSave, 1000, true);
-
-var throttled_autoSave = _.throttle(autoSave, 1000);
-
-function rebindClickFunction() {
-	$("#title").click(function(){	
-		// When user clicks on the title, change to a text input so the user can change the title
-		var currentTitle = $("#title").text();
-		$(this).replaceWith("<form id=\'newTitleForm\'><input type=\'text\' id=\'newTitle\' value=\'" + currentTitle + "\'><input type=\'submit\' value=\'OK\'>");
-		
-		// After the user has clicked OK for the new title, change to the (new) title text
-		$("#newTitleForm").submit(function( event ) {
-			alert("clicked to submit form");
-			event.preventDefault();
-			event.stopPropagation();
-			var newTitle = $("#newTitle").val();
-			var newHtml = "<div id=\'title\'>" + newTitle + "</div>";
-			$(this).replaceWith(newHtml);
-			// set the save flag to unsaved because the title (and thus the note as a whole) has been changed
-			$("#saveFlag").text(unsaved);
-			// Rebind the click function since we have changed the id (even though it has the same name, it's no longer bound)
-			rebindClickFunction();
-			return false;
-		});
-	});
-};
+// Throttle autosave so we don't autosave constantly
+var throttled_autoSave = _.throttle(autoSave, 20000);
 
 /* This could go in document.ready, but because it will only
 * be called if the DOM is ready, we don't really need to worry about
@@ -274,12 +208,12 @@ function autoSave() {
 	var currentText = $("#text").val();
 	chrome.storage.sync.set( {"autosave": currentText} );
 	// Set saved flag
-	$("#saveFlag").text(saved);
+	$("#title").toggleClass("modified", false);
 };
 
 /* TODO:
-* 1. STYLE
-* 2. Do we want to save to Google Drive instead of chrome.storage.sync?
-* 3: Consider refactoring with Backbone.js not that it's necessary
+* 1. SANITIZE TITLE INPUT
+* 2. Style
+* 3. Do we want to save to Google Drive instead of chrome.storage.sync?
 */
 
