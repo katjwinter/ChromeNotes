@@ -8,7 +8,11 @@ $(document).ready(function() {
 	
 	// Restore any auto-saved text and if there isn't any,
 	// display the default text.
-	$("#text").val(docModule.load(null));
+	docModule.load(null, initialize);
+	
+	function initialize(text) {
+		$("#text").val(text);
+	}
 	
 	// Set title to default
 	resetTitle();
@@ -91,9 +95,7 @@ $(document).ready(function() {
 	
 	// When a title is selected from the load menu, load that title and text
 	$("#loadMenu").change(function() {
-		/*var title = $(this).val();
-		var text = docModule.load(title); // need to send a callback instead
-		alert(text);*/
+		var title = $(this).val();
 		docModule.load(title, updateText);
 	});
 	

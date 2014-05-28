@@ -45,11 +45,12 @@ var docModule = (function() {
 		return true;
 	}
 	
+	// chrome.storage.sync.get() is asynchronous so we need to call a callback function
+	// instead of trying to return a result, even from within the callback we send to .get() in the first place
 	function load(title, callback) {
 		if ( !title ) {
 			title = autosave;
 		}
-
 		chrome.storage.sync.get(title, function(document) {
 			callback(document[title]);
 		});
