@@ -33,13 +33,11 @@ $(document).ready(function() {
 	/* When the user clicks on New:
 	 * - Clear text area
 	 * - Reset title to Untitled
-	 * - Clear any autosaved text 
 	 * - Set save flag because document is new and thus unchanged */
 	$("#new").click(function() {
 		$("#text").val("");
 		$("#title").text("Untitled");
 		$("#title").toggleClass("modified", false);
-		chrome.storage.sync.remove("autosave");
 	});
 	
 	// Clear saved flag upon change to text. Also
@@ -58,136 +56,115 @@ $(document).ready(function() {
 	$("#save").click(function() {
 		var title = $("#title").text();
 		var text = $("#text").val();
-		// Check that there is not a title conflict
-		chrome.storage.sync.get(title, function(newTitle) {
-			if (newTitle[title]) {
-				// There is already a note saved with this title
-				// - prompt to overwrite or to cancel
-				alert("Error: A note with this file already exists");
-			}
-			else {
-				// no conflict, so proceed with save
-				var pair = {};
-				pair[title] = text; // necessary to save the key as a variable
-				chrome.storage.sync.set(pair);
-				// set save flag
-				$("#title").toggleClass("modified", false);
-				alert(title + " saved successfully");
-			}
-		});
+		
+		if (docModule.save(title, text)) {
+			// set save flag
+			$("#title").toggleClass("modified", false);
+			alert(title + " saved successfully");
+		}
+		else {
+			alert("Error saving");
+		}
 	});
 	
 	// Load text and title
 	$("#load").click(function() {
 		// get all saved items
-		chrome.storage.sync.get(null, function(allSaves) {
-			var titles = Object.getOwnPropertyNames(allSaves);
-			// If there is at least one saved note, present them in a dropdown list
-			if (titles) {
-				var titleList = [];
-				titleList.push("Select a file to load");
-				for (titlekey in titles) {
-					titleList.push(titles[titlekey]);
-				}
-				// Update the menu via underscore.js templates
-				var menuTemplate = $("#menuTemplate").html();
-				$("#loadMenu").html(_.template(menuTemplate, {titleList:titleList}));
-				
-				// Bind to function so whichever one is selected, load that title and text
-				$("#loadMenu").change(function() {
-					var title = $(this).val();
-					chrome.storage.sync.get(title, function(text) {
-						var restore = text[title];
-						if (restore) {
-							$("#text").val(restore);
-							if (title != "autosave") {
-								$("#title").text(title);
-							}
-							else {
-								resetTitle();
-							}
-							// reset save flag because this is newly loaded so no changes have been made
-							$("#title").toggleClass("modified", false);
-							// hide the load menu
-							$("#loadMenu").hide();
-						}
-						else {
-							alert("No text associated with this title");
-						}
-					});
-				});
-				
-				// Make the load menu visible
-				$("#loadMenu").show();
+		var titles = docModule.getTitles();
+		// If there is at least one saved note, present them in a dropdown list
+		if (titles) {
+			var titleList = [];
+			titleList.push("Select a file to load");
+			for (titlekey in titles) {
+				titleList.push(titles[titlekey]);
+			}
+			// Update the menu via underscore.js templates
+			var menuTemplate = $("#menuTemplate").html();
+			$("#loadMenu").html(_.template(menuTemplate, {titleList:titleList}));
+			
+			// Make the load menu visible
+			$("#loadMenu").show();
+		}
+		else {
+			alert("No saved files to load");
+		}
+	});
+	
+	// When a title is selected from the load menu, load that title and text
+	$("#loadMenu").change(function() {
+		var title = $(this).val();
+		text = docModule.load(title);
+		if (text) {
+			$("#text").val(text);
+			if (title != "autosave") {
+				$("#title").text(title);
 			}
 			else {
-				alert("No saved files to load");
+				resetTitle();
 			}
-		});
+			// reset save flag because this is newly loaded so no changes have been made
+			$("#title").toggleClass("modified", false);
+			// hide the load menu
+			$("#loadMenu").hide();
+		}
+		else {
+			alert("Error: Could not locate text associated with this title");
+		}
 	});
 	
 	// Delete a saved file
 	$("#delete").click(function() {
 		// get all saved items
-		chrome.storage.sync.get(null, function(allSaves) {
-			var titles = Object.getOwnPropertyNames(allSaves);
-			// If there is at least one saved note, present them in a dropdown list
-			if (titles) {
-				var titleList = [];
-				titleList.push("Select a file to DELETE");
-				for (titlekey in titles) {
-					titleList.push(titles[titlekey]);
-				}
-				// Update the menu via underscore.js templates
-				var menuTemplate = $("#menuTemplate").html();
-				$("#delMenu").html(_.template(menuTemplate, {titleList:titleList}));
-				
-				// Bind to function so whichever one is selected is deleted
-				$("#delMenu").change(function() {
-					var title = $(this).val();
-					chrome.storage.sync.remove(title, function() {
-						if (chrome.runtime.lastError) {
-							alert("Error: Could not delete file");
-						}
-						else {
-							alert("File successfully deleted");
-						}
-					});
-					// Hide delete menu
-					$("#delMenu").hide();
-				});
-				
-				// Make the delete menu visible
-				$("#delMenu").show();
+		var titles = docModule.getTitles();
+		// If there is at least one saved note, present them in a dropdown list
+		if (titles) {
+			var titleList = [];
+			titleList.push("Select a file to DELETE");
+			for (titlekey in titles) {
+				titleList.push(titles[titlekey]);
 			}
-			else {
-				alert("No saved files to delete");
-			}
-		});
+			
+			// Update the menu via underscore.js templates
+			var menuTemplate = $("#menuTemplate").html();
+			$("#delMenu").html(_.template(menuTemplate, {titleList:titleList}));
+			
+			// Make the delete menu visible
+			$("#delMenu").show();
+		}
+		else {
+			alert("No saved files to delete");
+		}
+	});
+	
+	// Whichever file is selected from delete menu dropdown is deleted
+	$("#delMenu").change(function() {
+		var title = $(this).val();
+		if (docModule.remove(title)) {
+			alert("File deleted");
+			// Hide delete menu
+			$("#delMenu").hide();
+		}
+		else {
+			alert("Error deleting file");
+		}
 	});
 	
 	// Delete all saved files
 	$("#delAll").click(function() {
-		chrome.storage.sync.clear(function() {
-			if (chrome.runtime.lastError) {
+		if (docModule.removeAll()) {
+			alert("All files deleted");
+		}
+		else {
 				alert("Error: Could not delete files");
-			}
-			else {
-				alert("All files successfully deleted");
-			}
-		});
+		}
 	});
 	
-	// If a dropdown menu is open and the user clicks elsewhere, close the dropdown
+	// If user clicks somewhere other than a drop-down menu, make sure the dropdowns close
 	$(document).click(function(event) { 
-		if ($(event.target).closest("#loadMenu").length == 0) {
-			$("#loadMenu").hide()
-		}        
-	});
-	$(document).click(function(event) {
-		if ($(event.target).closest("#delMenu").length == 0) {
+		if ($(event.target).closest("#menuOptions").length == 0) {
+			$("#loadMenu").hide();
 			$("#delMenu").hide();
-		}
+		}        
 	});
 });
 
@@ -204,11 +181,10 @@ var throttled_autoSave = _.throttle(autoSave, 20000);
 * whether or not #text has been loaded. It's a precondition that it's been loaded.
 */
 function autoSave() {
-	// Save to Chrome storage (synced)
 	var currentText = $("#text").val();
-	chrome.storage.sync.set( {"autosave": currentText} );
-	// Set saved flag
-	$("#title").toggleClass("modified", false);
+	if (docModule.save("autosave", currentText)) {
+		$("#title").toggleClass("modified", false);
+	}
 };
 
 /* TODO:
