@@ -1,24 +1,29 @@
 var docModule = (function() {
 	
+	var autosave = "autosave";
+	
 	function save(title, text) {
-		// Check that there is not a title conflict
-		chrome.storage.sync.get(title, function(document) {
-			if (document[title]) {
-				// There is already a note saved with this title
+		if ( !title ) {
+			title = autosave;
+		}
+		else {
+			// Check that there is not a title conflict
+			chrome.storage.sync.get(title, function(document) {
+				if (document[title]) {
+					// There is already a note saved with this title
+					return false;
+				}
+			});
+		}
+		// Proceed with save
+		var newDocument = {};
+		newDocument[title] = text; // necessary step in order to save the key as a variable
+		chrome.storage.sync.set(newDocument, function() {
+			if (chrome.runtime.lastError) {
 				return false;
 			}
-			else {
-				// no conflict, so proceed with save
-				var newDocument = {};
-				newDocument[title] = text; // necessary step in order to save the key as a variable
-				chrome.storage.sync.set(newDocument, function() {
-					if (chrome.runtime.lastError) {
-						return false;
-					}
-				});
-				return true;
-			}
 		});
+		return true;
 	}
 	
 	function remove(title) {
@@ -40,28 +45,30 @@ var docModule = (function() {
 		return true;
 	}
 	
-	function load(title) {
-		var text;
+	function load(title, callback) {
+		if ( !title ) {
+			title = autosave;
+		}
+
 		chrome.storage.sync.get(title, function(document) {
-			text = document[title];
+			callback(document[title]);
 		});
-		return text;
 	}
 	
-	function getTitles() {
-		var titles;
+	// chrome.storage.sync.get() is asynchronous so we need to call a callback function
+	// instead of trying to return a result, even from within the callback we send to .get() in the first place
+	function getTitles(callback) {
 		chrome.storage.sync.get(null, function(allSaves) {
-			titles = Object.getOwnPropertyNames(allSaves);
+			callback(Object.getOwnPropertyNames(allSaves));
 		});
-		return titles;
 	}
 	
 	return {
-		save:save,
-		remove:remove,
-		removeAll:removeAll,
-		load:load,
-		getTitles:getTitles
+		save: save,
+		remove: remove,
+		removeAll: removeAll,
+		load: load,
+		getTitles: getTitles
 	};
 	
-}());
+})();

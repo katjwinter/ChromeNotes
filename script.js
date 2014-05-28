@@ -8,14 +8,7 @@ $(document).ready(function() {
 	
 	// Restore any auto-saved text and if there isn't any,
 	// display the default text.
-	chrome.storage.sync.get('autosave', function(stored_value) {
-		if (stored_value.autosave) {
-			$("#text").val(stored_value.autosave);
-		}
-		else {
-			$("#text").val("Enter notes here...");
-		}
-	});
+	$("#text").val(docModule.load(null));
 	
 	// Set title to default
 	resetTitle();
@@ -23,6 +16,7 @@ $(document).ready(function() {
 	$("#title").click(function() {	
 		// When user clicks on the title, allow them to edit.
 		$(this).prop("contenteditable", true);
+		$(this).focus();
 	});
 	
 	$("#title").blur(function() {
@@ -36,43 +30,48 @@ $(document).ready(function() {
 	 * - Set save flag because document is new and thus unchanged */
 	$("#new").click(function() {
 		$("#text").val("");
-		$("#title").text("Untitled");
+		resetTitle();
 		$("#title").toggleClass("modified", false);
 	});
 	
 	// Clear saved flag upon change to text. Also
-	// call autosave (depending on debounce)
-	var textArea = document.getElementById("text");
-	textArea.oninput = function() {
-		// clear saved flag
+	// call autosave (depending on throttle)
+	$("#text").keydown(function() {
 		$("#title").toggleClass("modified", true);
 		var currentText = $("#text").val();
+		currentText = sanitize(currentText); // Be good and sanitize user input
 		if (currentText) {
 			throttled_autoSave();
 		}
-	};
+	});
 	
 	// Save text and title
 	$("#save").click(function() {
 		var title = $("#title").text();
 		var text = $("#text").val();
 		
+		// Be good and sanitize user input
+		title = sanitize(title);
+		text = sanitize(text);
+		
 		if (docModule.save(title, text)) {
-			// set save flag
 			$("#title").toggleClass("modified", false);
-			alert(title + " saved successfully");
+			diagModule.showSuccess(title + " was saved");
 		}
 		else {
-			alert("Error saving");
+			diagModule.showError("Error saving");
 		}
 	});
 	
 	// Load text and title
 	$("#load").click(function() {
 		// get all saved items
-		var titles = docModule.getTitles();
+		docModule.getTitles( buildLoadMenu );
+	});
+	
+	function buildLoadMenu(titles) {
 		// If there is at least one saved note, present them in a dropdown list
-		if (titles) {
+		if (titles.length > 0) {
 			var titleList = [];
 			titleList.push("Select a file to load");
 			for (titlekey in titles) {
@@ -86,15 +85,21 @@ $(document).ready(function() {
 			$("#loadMenu").show();
 		}
 		else {
-			alert("No saved files to load");
+			diagModule.showError("No saved files to load");
 		}
-	});
+	}
 	
 	// When a title is selected from the load menu, load that title and text
 	$("#loadMenu").change(function() {
-		var title = $(this).val();
-		text = docModule.load(title);
+		/*var title = $(this).val();
+		var text = docModule.load(title); // need to send a callback instead
+		alert(text);*/
+		docModule.load(title, updateText);
+	});
+	
+	function updateText(text) {
 		if (text) {
+			var title = $("#loadMenu").val();
 			$("#text").val(text);
 			if (title != "autosave") {
 				$("#title").text(title);
@@ -108,9 +113,9 @@ $(document).ready(function() {
 			$("#loadMenu").hide();
 		}
 		else {
-			alert("Error: Could not locate text associated with this title");
+			diagModule.showError("Could not locate text associated with this title");
 		}
-	});
+	}
 	
 	// Delete a saved file
 	$("#delete").click(function() {
@@ -132,7 +137,7 @@ $(document).ready(function() {
 			$("#delMenu").show();
 		}
 		else {
-			alert("No saved files to delete");
+			diagModule.showError("No saved files to delete");
 		}
 	});
 	
@@ -140,22 +145,22 @@ $(document).ready(function() {
 	$("#delMenu").change(function() {
 		var title = $(this).val();
 		if (docModule.remove(title)) {
-			alert("File deleted");
+			diagModule.showSuccess("File deleted");
 			// Hide delete menu
 			$("#delMenu").hide();
 		}
 		else {
-			alert("Error deleting file");
+			diagModule.showError("Error deleting file");
 		}
 	});
 	
 	// Delete all saved files
 	$("#delAll").click(function() {
 		if (docModule.removeAll()) {
-			alert("All files deleted");
+			diagModule.showSuccess("All files deleted");
 		}
 		else {
-				alert("Error: Could not delete files");
+				diagModule.showError("Could not delete files");
 		}
 	});
 	
@@ -177,19 +182,19 @@ function resetTitle() {
 var throttled_autoSave = _.throttle(autoSave, 20000);
 
 /* This could go in document.ready, but because it will only
-* be called if the DOM is ready, we don't really need to worry about
-* whether or not #text has been loaded. It's a precondition that it's been loaded.
+* be called if #text has been modified, we don't really need to worry about
+* whether or not #text has been loaded.
 */
 function autoSave() {
 	var currentText = $("#text").val();
-	if (docModule.save("autosave", currentText)) {
+	currentText = sanitize(currentText);
+	if (docModule.save(null, currentText)) {
 		$("#title").toggleClass("modified", false);
 	}
 };
 
-/* TODO:
-* 1. SANITIZE TITLE INPUT
-* 2. Style
-* 3. Do we want to save to Google Drive instead of chrome.storage.sync?
-*/
+function sanitize(text) {
+    var cleanText = text.replace(/[^a-zA-Z0-9\d\s]/g, "");
+    return cleanText;
+}
 

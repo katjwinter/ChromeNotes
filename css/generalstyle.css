@@ -1,0 +1,44 @@
+html {
+	height: 100%;
+	width: 400px;
+}
+#headings {
+	float: left;
+	width: 100%;
+}
+#saveFlag {
+	text-align: center;
+}
+#main_area {
+	float: left;
+	clear: both;
+}
+#text {
+	float: left;
+	width: 95%;
+	padding: 5px;
+	min-height: 275px;
+	border: 2px solid black;
+	overflow: auto;
+}
+#buttons {
+	float: left;
+	clear: both;
+	margin-top: 10px;
+}
+#menuOptions {
+	float: left;
+	clear: both;
+}
+#footer {
+	clear: both;
+}
+.modified:after {
+	content: "*";
+}
+#title[contenteditable="true"]:focus {
+	outline: 2px solid red;
+}
+#dialog {
+	display:none;
+}
