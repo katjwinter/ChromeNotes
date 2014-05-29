@@ -1,12 +1,7 @@
 var docModule = (function() {
 	
-	var autosave = "autosave";
-	
-	function save(title, text) {
-		if ( !title ) {
-			title = autosave;
-		}
-		else {
+	function save(title, text, ignoreConflicts) {
+		if ( !ignoreConflicts ) {
 			// Check that there is not a title conflict
 			chrome.storage.sync.get(title, function(document) {
 				if (document[title]) {
@@ -48,9 +43,6 @@ var docModule = (function() {
 	// chrome.storage.sync.get() is asynchronous so we need to call a callback function
 	// instead of trying to return a result, even from within the callback we send to .get() in the first place
 	function load(title, callback) {
-		if ( !title ) {
-			title = autosave;
-		}
 		chrome.storage.sync.get(title, function(document) {
 			callback(document[title]);
 		});

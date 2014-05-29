@@ -58,7 +58,7 @@ $(document).ready(function() {
 		title = sanitize(title);
 		text = sanitize(text);
 		
-		if (docModule.save(title, text)) {
+		if (docModule.save(title, text, false)) {
 			$("#title").toggleClass("modified", false);
 			diagModule.showSuccess(title + " was saved");
 		}
@@ -122,9 +122,12 @@ $(document).ready(function() {
 	// Delete a saved file
 	$("#delete").click(function() {
 		// get all saved items
-		var titles = docModule.getTitles();
+		var titles = docModule.getTitles(buildDeleteMenu);
+	});
+	
+	function buildDeleteMenu(titles) {
 		// If there is at least one saved note, present them in a dropdown list
-		if (titles) {
+		if (titles.length > 0) {
 			var titleList = [];
 			titleList.push("Select a file to DELETE");
 			for (titlekey in titles) {
@@ -141,7 +144,7 @@ $(document).ready(function() {
 		else {
 			diagModule.showError("No saved files to delete");
 		}
-	});
+	}
 	
 	// Whichever file is selected from delete menu dropdown is deleted
 	$("#delMenu").change(function() {
@@ -190,7 +193,7 @@ var throttled_autoSave = _.throttle(autoSave, 20000);
 function autoSave() {
 	var currentText = $("#text").val();
 	currentText = sanitize(currentText);
-	if (docModule.save(null, currentText)) {
+	if (docModule.save("autosave", currentText, true)) {
 		$("#title").toggleClass("modified", false);
 	}
 };
