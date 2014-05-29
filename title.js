@@ -14,12 +14,17 @@ var title = (function() {
 			click( editTitle ).
 			blur( updateTitle );
 		// Register for custom events
-		docEl.bind("NewNote", reset);
+		docEl.bind("NewNote LoadAutoSave", reset);
 		docEl.bind("NoteChange", function() {
 			titleEl.toggleClass("modified", true);
 		});
 		docEl.bind("SuccessfulSave", function() {
 			titleEl.toggleClass("modified", false);
+		});
+		docEl.bind("LoadNote", function(data) {
+			titleEl.
+				text(data.title).
+				toggleClass("modified", false);
 		});
 	}
 	
