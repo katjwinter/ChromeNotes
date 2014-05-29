@@ -44,7 +44,7 @@ var docModule = (function() {
 	// instead of trying to return a result, even from within the callback we send to .get() in the first place
 	function load(title, callback) {
 		chrome.storage.sync.get(title, function(document) {
-			callback(document[title]);
+			callback( { title:title, text:document[title] } );
 		});
 	}
 	

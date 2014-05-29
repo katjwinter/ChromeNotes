@@ -1,20 +1,21 @@
 var diagModule = (function() {
 
 	function show(title, message)  {
-		$("#dialog").text(message);
-		$("#dialog").dialog( {
-			modal: true,
-			draggable: true,
-			resizable: false,
-			position: ['center'],
-			width: 300,
-			title: title,
-			buttons: {
-				"OK": function() {
-					$("#dialog").dialog("close");
+		$("#dialog").
+			text(message).
+			dialog( {
+				modal: true,
+				draggable: true,
+				resizable: false,
+				position: ['center'],
+				width: 300,
+				title: title,
+				buttons: {
+					"OK": function() {
+						$("#dialog").dialog("close");
+					}
 				}
-			}
-		});
+			});
 	}
 	
 	function showError(message) {
@@ -26,6 +27,7 @@ var diagModule = (function() {
 	}
 	
 	return {
+		init:init
 		showError:showError,
 		showSuccess:showSuccess
 	};

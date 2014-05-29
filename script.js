@@ -1,69 +1,25 @@
 $(document).ready(function() {
+
+	setup();
+	title.init();
+	text.init();
 	
-	// Hide load menu until it's called for
-	$("#loadMenu").hide();
-	
-	// Hide delete menu until it's called for
-	$("#delMenu").hide();
-	
-	// Restore any auto-saved text and if there isn't any,
-	// display the default text.
-	docModule.load(null, initialize);
-	
-	function initialize(text) {
-		$("#text").val(text);
-	}
-	
-	// Set title to default
-	resetTitle();
-	
-	$("#title").click(function() {	
-		// When user clicks on the title, allow them to edit.
-		$(this).prop("contenteditable", true);
-		$(this).focus();
-	});
-	
-	$("#title").blur(function() {
-		$(this).toggleClass("modified", true);
-		$(this).prop("contenteditable", false);
-	});
-	
-	/* When the user clicks on New:
-	 * - Clear text area
-	 * - Reset title to Untitled
-	 * - Set save flag because document is new and thus unchanged */
 	$("#new").click(function() {
-		$("#text").val("");
-		resetTitle();
-		$("#title").toggleClass("modified", false);
-	});
-	
-	// Clear saved flag upon change to text. Also
-	// call autosave (depending on throttle)
-	$("#text").keydown(function() {
-		$("#title").toggleClass("modified", true);
-		var currentText = $("#text").val();
-		currentText = sanitize(currentText); // Be good and sanitize user input
-		if (currentText) {
-			throttled_autoSave();
-		}
+		$(document).trigger("NewNote");
 	});
 	
 	// Save text and title
 	$("#save").click(function() {
-		var title = $("#title").text();
-		var text = $("#text").val();
-		
-		// Be good and sanitize user input
-		title = sanitize(title);
-		text = sanitize(text);
+		// Sanitize user input
+		var title = sanitize( $("#title").text() );
+		var text = sanitize( $("#text").val() );
 		
 		if (docModule.save(title, text, false)) {
-			$("#title").toggleClass("modified", false);
-			diagModule.showSuccess(title + " was saved");
+			$(document).trigger("SuccessfulSave");
+			diagModule.showSuccess(title + " saved successfully");
 		}
 		else {
-			diagModule.showError("Error saving");
+			diagModule.showError("Could not save " + title);
 		}
 	});
 	
@@ -83,10 +39,9 @@ $(document).ready(function() {
 			}
 			// Update the menu via underscore.js templates
 			var menuTemplate = $("#menuTemplate").html();
-			$("#loadMenu").html(_.template(menuTemplate, {titleList:titleList}));
-			
-			// Make the load menu visible
-			$("#loadMenu").show();
+			$("#loadMenu").
+				html(_.template(menuTemplate, {titleList:titleList})).
+				show();
 		}
 		else {
 			diagModule.showError("No saved files to load");
@@ -99,18 +54,14 @@ $(document).ready(function() {
 		docModule.load(title, updateText);
 	});
 	
-	function updateText(text) {
-		if (text) {
-			var title = $("#loadMenu").val();
-			$("#text").val(text);
-			if (title != "autosave") {
-				$("#title").text(title);
+	function updateText(note) {
+		if (note.text) {
+			if (note.title != "autosave") 
+				$(document).trigger("LoadNote", {title:title, text:text});
 			}
 			else {
-				resetTitle();
+				$(document).trigger("LoadAutoSave", {text:text});
 			}
-			// reset save flag because this is newly loaded so no changes have been made
-			$("#title").toggleClass("modified", false);
 			// hide the load menu
 			$("#loadMenu").hide();
 		}
@@ -118,7 +69,7 @@ $(document).ready(function() {
 			diagModule.showError("Could not locate text associated with this title");
 		}
 	}
-	
+
 	// Delete a saved file
 	$("#delete").click(function() {
 		// get all saved items
@@ -167,8 +118,9 @@ $(document).ready(function() {
 		else {
 				diagModule.showError("Could not delete files");
 		}
-	});
+	});	
 	
+	// **************************** General GUI interaction
 	// If user clicks somewhere other than a drop-down menu, make sure the dropdowns close
 	$(document).click(function(event) { 
 		if ($(event.target).closest("#menuOptions").length == 0) {
@@ -176,20 +128,33 @@ $(document).ready(function() {
 			$("#delMenu").hide();
 		}        
 	});
-});
+	
+	$(document).bind("NoteChange") {
+		// Sanitize user input
+		currentText = sanitize( $("#text").val() ); 
+		if (currentText) {
+			throttled_autoSave();
+		}
+	});
 
-// Title default
-function resetTitle() {
-	$("#title").text("Untitled");
+function setup() {
+	// Hide load menu until it's called for
+	$("#loadMenu").hide();
+	
+	// Hide delete menu until it's called for
+	$("#delMenu").hide();
+	
+	// Restore any auto-saved text
+	docModule.load("autosave", initialize);
+	
+	function initialize(text) {
+		$("#text").val(text);
+	}
 }
 
 // Throttle autosave so we don't autosave constantly
 var throttled_autoSave = _.throttle(autoSave, 20000);
 
-/* This could go in document.ready, but because it will only
-* be called if #text has been modified, we don't really need to worry about
-* whether or not #text has been loaded.
-*/
 function autoSave() {
 	var currentText = $("#text").val();
 	currentText = sanitize(currentText);
