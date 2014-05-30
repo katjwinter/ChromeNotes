@@ -84,6 +84,13 @@ function autoSave(text) {
 
 function sanitize(text) {
     var cleanText = text.replace(/[^a-zA-Z0-9\d\s]/g, "");
+	// Trim the title length to something reasonable
+	var extra = cleanText.length - 35;
+	if (extra > 0) { 
+		alert("removing extra: " + extra);
+		cleanText = cleanText.slice(0, -extra);
+		alert("now title length is: " + cleanText.length);
+	}
     return cleanText;
 }
 

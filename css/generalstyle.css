@@ -2,16 +2,24 @@ html {
 	height: 100%;
 	width: 400px;
 }
+body {
+	background:url("../images/notepad2.jpg");
+}
 #headings {
 	float: left;
-	width: 100%;
+	width: 95%;
 }
-#saveFlag {
-	text-align: center;
+#title {
+	background-color: white;
+	overflow: hidden;
+	outline: 2px solid black;
+	width: 95%;
+	padding: 5px;
 }
 #main_area {
 	float: left;
 	clear: both;
+	width: 95%;
 }
 #text {
 	float: left;
