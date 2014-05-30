@@ -37,7 +37,8 @@ var menu = (function() {
 		});
 		// When a title is selected from the delete menu, delete that title and text
 		$("#delMenu").change(function() {
-			if (docModule.remove( $(this).val() )) {
+			var title = $(this).val();
+			if (docModule.remove( title )) {
 				$(document).trigger("RemoveComplete", { title:title });
 				$("#delMenu").hide();
 			}

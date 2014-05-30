@@ -11,7 +11,7 @@ var text = (function() {
 		$("#text").keydown(textChange);
 		// Register for custom events
 		$(document).bind("NewNote", reset);
-		$(document).bind("LoadAutoSave", function(e, note) {
+		$(document).bind("LoadAutoSave LoadNote", function(e, note) {
 			if (note.text) {
 				$("#text").text(note.text);
 			}

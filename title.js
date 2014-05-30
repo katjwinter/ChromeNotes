@@ -19,7 +19,7 @@ var title = (function() {
 		$(document).bind("SuccessfulSave", function() {
 			$("#title").toggleClass("modified", false);
 		});
-		$(document).bind("LoadNote", function(data) {
+		$(document).bind("LoadNote", function(e, data) {
 			$("#title").
 				text(data.title).
 				toggleClass("modified", false);

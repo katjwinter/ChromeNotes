@@ -35,13 +35,13 @@ $(document).ready(function() {
 		}
 	});
 	
-	$(document).bind("LoadComplete", function(note) {
+	$(document).bind("LoadComplete", function(e, note) {
 		if (note.text) {
 			if (note.title != "autosave") {
-				$(document).trigger("LoadNote", {title:note.title, text:note.text});
+				$(document).trigger("LoadNote", { title:note.title, text:note.text });
 			}
 			else {
-				$(document).trigger("LoadAutoSave", {text:note.text});
+				$(document).trigger("LoadAutoSave", { title:note.title, text:note.text });
 			}
 		}
 		else {
@@ -49,7 +49,7 @@ $(document).ready(function() {
 		}
 	});
 	
-	$(document).bind("RemoveComplete", function(note) {
+	$(document).bind("RemoveComplete", function(e, note) {
 		if (note.title) {
 			diagModule.showSuccess(note.title + " deleted");
 		}
@@ -60,21 +60,21 @@ $(document).ready(function() {
 	
 	$(document).bind("NoteChange", function() {
 		// Sanitize user input
-		currentText = sanitize( $("#text").val() ); 
+		currentText = sanitize( $("#text").val() );
 		if (currentText) {
-			throttled_autoSave(currentText);
+			throttled_autoSave( currentText );
 		}
 	});
 });
 
 function setup() {
 	docModule.load("autosave", function(note) {
-		$(document).trigger("LoadAutoSave", { text:note.text });
+		$(document).trigger("LoadAutoSave", { title:note.title, text:note.text });
 	});
 }
 
 // Throttle autosave so we don't autosave constantly
-var throttled_autoSave = _.throttle(function() { return autoSave(text); }, 20000);
+var throttled_autoSave = _.throttle(function(text) { return autoSave(text); }, 20000);
 
 function autoSave(text) {
 	if (docModule.save("autosave", text, true)) {
