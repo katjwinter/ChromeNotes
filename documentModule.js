@@ -1,3 +1,5 @@
+// Module to handle all communication with storage. This allows us to swap out with
+// a different module later if we decide to change storage methods away from chrome.storage.sync
 var docModule = (function() {
 	
 	function save(title, text, ignoreConflicts) {

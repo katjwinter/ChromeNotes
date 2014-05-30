@@ -1,5 +1,6 @@
 $(document).ready(function() {
 
+	// Initialize all parts
 	setup();
 	title.init();
 	text.init();
@@ -35,6 +36,7 @@ $(document).ready(function() {
 		}
 	});
 	
+	// Custom event handlers. 
 	$(document).bind("LoadComplete", function(e, note) {
 		if (note.text) {
 			if (note.title != "autosave") {
@@ -67,6 +69,9 @@ $(document).ready(function() {
 	});
 });
 
+// Start by loading an autosave if one is available
+// This way if the user clicks away (thus closing the note) they can just re-open it and be
+// basically back where they left off.
 function setup() {
 	docModule.load("autosave", function(note) {
 		$(document).trigger("LoadAutoSave", { title:note.title, text:note.text });
@@ -74,7 +79,7 @@ function setup() {
 }
 
 // Throttle autosave so we don't autosave constantly
-var throttled_autoSave = _.throttle(function(text) { return autoSave(text); }, 20000);
+var throttled_autoSave = _.throttle(function(text) { return autoSave(text); }, 5000);
 
 function autoSave(text) {
 	if (docModule.save("autosave", text, true)) {
@@ -83,13 +88,12 @@ function autoSave(text) {
 };
 
 function sanitize(text) {
+	// remove unnecessary characters
     var cleanText = text.replace(/[^a-zA-Z0-9\d\s]/g, "");
 	// Trim the title length to something reasonable
 	var extra = cleanText.length - 35;
 	if (extra > 0) { 
-		alert("removing extra: " + extra);
 		cleanText = cleanText.slice(0, -extra);
-		alert("now title length is: " + cleanText.length);
 	}
     return cleanText;
 }

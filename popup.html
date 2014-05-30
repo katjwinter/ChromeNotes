@@ -20,6 +20,7 @@
 
 <body>
 	<div id="headings">
+		<!-- Title Section -->
 		<h3 id="title"></h3>
 	</div>
 	<div id="main_area">
@@ -37,6 +38,7 @@
 		</div>
 	</div>
 	<div id="menuOptions">
+		<!-- Dropdown menu template using jQuery templating -->
 		<script id="menuTemplate" type="underscore/template">
 				<% _.each(titleList, function(title) { %>
 					<option>
@@ -44,10 +46,13 @@
 					</option>
 				<% }); %>
 		</script>
+		<!-- Dropdown menus -->
 		<select id="loadMenu"></select>
 		<select id="delMenu"></select>
 	</div>
+	<!-- placeholder for dialogs -->
 	<div id="dialog"></div>
+	<!-- placeholder to clear the other elements -->
 	<div id="footer"></div>
 </body>
 </html>

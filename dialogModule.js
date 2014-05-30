@@ -1,3 +1,4 @@
+// Module to create error and success dialogs using jQuery UI
 var diagModule = (function() {
 
 	function show(title, message)  {

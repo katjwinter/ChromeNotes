@@ -67,7 +67,7 @@ var menu = (function() {
 			var menuTemplate = $("#menuTemplate").html();
 			$(settings.element).html(_.template(menuTemplate, {titleList:titleList}));
 			
-			// Make the delete menu visible
+			// Make the menu visible
 			$(settings.element).show();
 		}
 		else {
