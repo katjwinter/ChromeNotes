@@ -37,7 +37,7 @@ $(document).ready(function() {
 	
 	$(document).bind("LoadComplete", function(note) {
 		if (note.text) {
-			if (note.title != "autosave") 
+			if (note.title != "autosave") {
 				$(document).trigger("LoadNote", {title:note.title, text:note.text});
 			}
 			else {
@@ -70,7 +70,7 @@ $(document).ready(function() {
 function setup() {
 	docModule.load("autosave", function(note) {
 		$(document).trigger("LoadAutoSave", { text:note.text });
-	}
+	});
 }
 
 // Throttle autosave so we don't autosave constantly

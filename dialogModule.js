@@ -27,7 +27,6 @@ var diagModule = (function() {
 	}
 	
 	return {
-		init:init
 		showError:showError,
 		showSuccess:showSuccess
 	};

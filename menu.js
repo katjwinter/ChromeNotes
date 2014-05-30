@@ -37,14 +37,14 @@ var menu = (function() {
 		});
 		// When a title is selected from the delete menu, delete that title and text
 		$("#delMenu").change(function() {
-			if (docModule.remove( $(this.val()) ) {
+			if (docModule.remove( $(this).val() )) {
 				$(document).trigger("RemoveComplete", { title:title });
 				$("#delMenu").hide();
 			}
 			else {
 				$(document).trigger("RemoveComplete", null);
 			}
-		}
+		});
 		// If user clicks somewhere other than a drop-down menu, make sure the dropdowns close
 		$(document).click(function(e) { 
 			if ($(e.target).closest("#menuOptions").length == 0) {
@@ -72,12 +72,16 @@ var menu = (function() {
 		else {
 			diagModule.showError(settings.error);
 		}
-	}
+	};
 	
 	// Load completed so hide menu and notify listeners
-	var loadComplete(note) {
+	var loadComplete = function(note) {
 		$("#loadMenu").hide();
 		$(document).trigger("LoadComplete", { title:note.title, text:note.text });
-	}
+	};
+	
+	return {
+		init:init
+	};
 
 })();
