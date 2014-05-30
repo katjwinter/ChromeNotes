@@ -3,4 +3,7 @@ There is also an autosave feature so that you can close the notepad and re-open 
 right where you left off. I wrote it because I often want to jot down notes while I'm
 browsing, but don't want to open a separate application. As a result I would use 
 old fashioned paper and then promptly lose the notes. This should sovle that.
+
+Also used as an excercise in better jQuery and javascript organization using the module pattern, custom events, and templating.
+
 Written by Kat Winter-Lewis in 2014.
