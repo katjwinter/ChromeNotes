@@ -50,9 +50,9 @@ var docModule = (function() {
 	
 	// chrome.storage.sync.get() is asynchronous so we need to call a callback function
 	// instead of trying to return a result, even from within the callback we send to .get() in the first place
-	function getTitles(callback) {
+	function getTitles(args, callback) {
 		chrome.storage.sync.get(null, function(allSaves) {
-			callback(Object.getOwnPropertyNames(allSaves));
+			callback(args, Object.getOwnPropertyNames(allSaves));
 		});
 	}
 	

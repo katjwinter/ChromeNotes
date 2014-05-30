@@ -13,10 +13,14 @@ var text = (function() {
 		textEl.keydown(textChange);
 		// Register for custom events
 		docEl.bind("NewNote", reset);
+		docEl.bind("LoadAutoSave", function(note) {
+			if (note.text) {
+				textEl.text(note.text);
+			}
+		}
 	}
 	
 	var reset = function() {
-		alert("resetting");
 		textEl.text(defaultText);
 	};
 	
