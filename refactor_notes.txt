@@ -1,0 +1,83 @@
+Document state:
+Logic: changed/unchanged based on edits and so forth
+GUI: modifying the Flag element
+
+Also states for:
+Title (default or modified)
+DelMenu (visible or hidden, what items are listed)
+LoadMenu (visible or hidden, what items are listed)
+
+Restore:
+autosave
+a particular document
+
+Saved Documents:
+Getting a list of saved documents for:
+-Deletion
+-Restoring
+
+Storage interaction:
+Saving (single document)
+Getting (single document)
+Clearing (all)
+Clearing (single document)
+
+testing:
+Selenium
+jsTestDriver
+
+Move js loads to bottom of page? Does it really make a difference? Does jquery document load make that unnecessary?
+
+could we do something with the title flag where instead of doing something janky with the header, we instead do like,
+"elementID.setAttribute("class","selected") and then have in our CSS like, ".selected: { somecss: whatever }"
+$("#title").setAttribute("class","modified") and then in our CSS like ".modified:after { content: "*"; }"
+
+separating out DOM creation from js to html template:
+JS:
+var template_book = loadTemplate("book_template.html");
+var book = templateBook.substitute( { Title: name, Cover: coverurl } );
+somebookList.appendChild(book);
+AND THEN HTML:
+<li>Title</li>
+INSTEAD OF LIKE:
+var book = doc.createElement("li");
+somebookList.appendChild(book);
+
+So we'd want to get the document titles in a for-each and add to a list
+after the for-each, up the template with the list
+and add to the element in popup.html
+
+Don't be putting variables outside of functions!
+Wrap code in an anonymous function which is immediately invoked (module pattern)
+
+Don't have event handlers that are calling unrelated modules!
+ex:
+loginBtn.onclick = function(e) {
+	login();
+	toolbar.update();
+	logger.log("logged in");
+}
+Instead have:
+loginButn.onclick = function(e) {
+	login();
+	event.fire("login")
+}
+and elsewhere in separate js file:
+function update() {...}
+event.listen("login", function(e) {
+	update();
+}
+
+Don't have a bunch of similar event handlers!
+home.onclick = function() { showPage("home"); }
+news.onclick = function() { showPage("news"); }
+INSTEAD:
+container.onclick = function(e) {
+	var id = e.target.id
+	var page = id.replace( "tab", "page" );
+	showPage(page);
+}
+
+TODO:
+What to use instead of alerts?
+How to organize/modularize calls to save/load in chrome storage

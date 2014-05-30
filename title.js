@@ -1,35 +1,33 @@
 var title = (function() {
 
 	var defaultText = "Untitled";
-	var titleEl = $("#title");
-	var docEl = $(document);
 	
 	function init() {
-		titleEl.text(defaultText);
+		$("#title").text(defaultText);
 		bindEvents();
 	}
 	
 	function bindEvents() {
-		titleEl.
+		$("#title").
 			click( editTitle ).
 			blur( updateTitle );
 		// Register for custom events
-		docEl.bind("NewNote LoadAutoSave", reset);
-		docEl.bind("NoteChange", function() {
-			titleEl.toggleClass("modified", true);
+		$(document).bind("NewNote LoadAutoSave", reset);
+		$(document).bind("NoteChange", function() {
+			$("#title").toggleClass("modified", true);
 		});
-		docEl.bind("SuccessfulSave", function() {
-			titleEl.toggleClass("modified", false);
+		$(document).bind("SuccessfulSave", function() {
+			$("#title").toggleClass("modified", false);
 		});
-		docEl.bind("LoadNote", function(data) {
-			titleEl.
+		$(document).bind("LoadNote", function(data) {
+			$("#title").
 				text(data.title).
 				toggleClass("modified", false);
 		});
 	}
 	
 	var reset = function() {
-		titleEl.
+		$("#title").
 			text(defaultText).
 			toggleClass("modified", false);
 	};

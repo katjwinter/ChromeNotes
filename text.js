@@ -1,8 +1,6 @@
 var text = (function() {
 
 	var defaultText = "";
-	var textEl = $("#text");
-	var docEl = $(document);
 	
 	function init() {
 		reset;
@@ -10,22 +8,26 @@ var text = (function() {
 	}
 	
 	function bindEvents() {
-		textEl.keydown(textChange);
+		$("#text").keydown(textChange);
 		// Register for custom events
-		docEl.bind("NewNote", reset);
+		$(document).bind("NewNote", reset);
+		$(document).bind("LoadAutoSave", function(e, note) {
+			if (note.text) {
+				$("#text").text(note.text);
+			}
+		});
 	}
 	
 	var reset = function() {
-		alert("resetting");
-		textEl.text(defaultText);
+		$("#text").text(defaultText);
 	};
 	
 	var textChange = function() {
-		docEl.trigger("NoteChange");
+		$(document).trigger("NoteChange");
 	}
 	
 	return {
 		init:init
-	}
+	};
 
-});
+})();
